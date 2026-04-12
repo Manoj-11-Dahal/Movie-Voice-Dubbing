@@ -1,0 +1,10 @@
+celery[redis]>=5.3.4
+redis==5.0.1
+torch>=2.4.0
+torchaudio>=2.4.0
+transformers>=4.40.0
+accelerate>=0.29.3
+demucs>=4.0.1
+openai-whisper>=20231117
+pyannote.audio>=3.1.1
+ffmpeg-python>=0.2.0

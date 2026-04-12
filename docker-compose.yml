@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - dubbing-network
+
+  backend:
+    build: 
+      context: .
+      dockerfile: ./backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - UPLOAD_DIR=/app/storage/uploads
+      - OUTPUT_DIR=/app/storage/output
+    volumes:
+      - ./storage:/app/storage
+      - ./models:/app/models
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+      - ./omnivoice:/app/omnivoice
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - dubbing-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./worker/Dockerfile
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - WORKER_CONCURRENCY=1
+    volumes:
+      - ./storage:/app/storage
+      - ./models:/app/models
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+      - ./omnivoice:/app/omnivoice
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - dubbing-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    ports:
+      - "7860:7860"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - dubbing-network
+
+networks:
+  dubbing-network:
+    driver: bridge
+
+volumes:
+  model_cache:
