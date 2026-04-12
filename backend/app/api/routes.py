@@ -4,7 +4,7 @@ import uuid
 import os
 import shutil
 
-from app.tasks.dubbing_task import process_video
+from ..tasks.dubbing_task import process_video
 
 router = APIRouter()
 
