@@ -39,7 +39,15 @@ def get_venv_python():
     download_script = os.path.join(os.path.dirname(__file__), "scripts", "download_models.py")
     if os.path.exists(download_script):
         print("Executing centralized model verification script...")
-        subprocess.run([python_exe, download_script], check=True)
+        print("NOTE: Large model downloads may take several minutes. Services will start regardless.")
+        try:
+            subprocess.run([python_exe, download_script], check=True, timeout=3600)
+        except subprocess.TimeoutExpired:
+            print("[WARNING] Model download timed out after 1 hour. Services will start anyway.")
+            print("Models will be downloaded on-demand during first use.")
+        except subprocess.CalledProcessError as e:
+            print(f"[WARNING] Model download failed: {e}")
+            print("Services will start anyway. Models will be downloaded on-demand during first use.")
     else:
         print("[System] Model download script bypassed (script omitted).")
 
@@ -50,14 +58,50 @@ def check_redis():
     try:
         result = subprocess.run(["redis-cli", "ping"], capture_output=True, text=True, timeout=2)
         if "PONG" in result.stdout:
+            print("[✓] Redis is running on localhost:6379")
             return True
     except Exception:
         pass
     
-    print("[WARNING] Redis ping failed or not in PATH.")
-    print("Ensure Redis is running locally on port 6379 for Celery Worker tasks.")
-    time.sleep(1)
-    return True
+    print("[WARNING] Redis is not running. Attempting to start Redis via Docker...")
+    
+    # Try to start Redis via Docker
+    try:
+        # Check if Redis container is already running
+        result = subprocess.run(
+            ["docker", "ps", "--filter", "name=redis", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        
+        if "redis" in result.stdout:
+            print("[✓] Redis container already running")
+            time.sleep(1)
+            return True
+        
+        # Try to start Redis container
+        print("Starting Redis container...")
+        subprocess.run(
+            ["docker", "run", "-d", "--name", "redis-dubbing", "-p", "6379:6379", "redis:latest"],
+            capture_output=True,
+            timeout=30
+        )
+        time.sleep(3)  # Give Redis time to start
+        
+        # Verify Redis is now running
+        result = subprocess.run(["redis-cli", "ping"], capture_output=True, text=True, timeout=2)
+        if "PONG" in result.stdout:
+            print("[✓] Redis started successfully via Docker")
+            return True
+        else:
+            print("[⚠] Redis started but ping failed")
+            return True
+            
+    except Exception as e:
+        print(f"[WARNING] Could not start Redis via Docker: {e}")
+        print("Celery workers will retry connecting. Make sure Redis is available on port 6379.")
+        return True
 
 def start_services():
     print_header("INITIALIZING OMNIVOICE DUBBING SERVER")
@@ -82,12 +126,12 @@ def start_services():
         # 1. Start FastAPI Backend (Using venv python)
         print("[1/3] Spinning up FastAPI Master Server (Port: 8000)...")
         backend_proc = subprocess.Popen(
-            [python_exe, "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"],
+            [python_exe, "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
             env=env,
             cwd=os.path.dirname(__file__)
         )
         processes.append(("FastAPI Backend", backend_proc))
-        time.sleep(2) 
+        time.sleep(3)  # Give backend time to start 
 
         # 2. Start Celery Worker (Using venv python)
         print("[2/3] Spinning up Celery ML Pipeline Worker...")
@@ -102,12 +146,16 @@ def start_services():
         # 3. Start Gradio Frontend (Using venv python)
         print("[3/3] Spinning up Premium UI Dashboard (Port: 7860)...")
         frontend_script = os.path.join(os.path.dirname(__file__), "frontend", "gradio_app.py")
-        frontend_proc = subprocess.Popen(
-            [python_exe, frontend_script],
-            env=env,
-            cwd=os.path.dirname(__file__)
-        )
-        processes.append(("Gradio UI", frontend_proc))
+        if os.path.exists(frontend_script):
+            frontend_proc = subprocess.Popen(
+                [python_exe, frontend_script],
+                env=env,
+                cwd=os.path.dirname(__file__)
+            )
+            processes.append(("Gradio UI", frontend_proc))
+        else:
+            print(f"[WARNING] Frontend script not found at {frontend_script}")
+            print("Skipping Gradio UI. Access the API at http://localhost:8000/docs")
         
         print_header("SERVER ONLINE: http://127.0.0.1:7860")
         
