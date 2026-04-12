@@ -1,352 +1,95 @@
-# 🎬 Local Dubbing Platform – Complete A-Z Guide
+<div align="center">
+  <img src="https://img.icons8.com/color/150/000000/microphone.png" alt="Logo">
+  <h1 align="center">🎬 Movie Voice Dubbing Studio</h1>
+  <p align="center">
+    <strong>A fully local, GPU-accelerated cinematic dubbing pipeline matching 100% original speaker timelines.</strong>
+  </p>
 
-A **fully offline, production-ready** dubbing platform that preserves original speaker voices (voice-to-voice translation), background music, and sound effects. Uses OmniVoice, Whisper, NLLB-200, Demucs, pyannote, and more – **no external APIs**.
+  [![GitHub Repo](https://img.shields.io/badge/GitHub-Manoj--11--Dahal%2FMovie--Voice--Dubbing-blue?style=for-the-badge&logo=github)](https://github.com/Manoj-11-Dahal/Movie-Voice-Dubbing.git)
+  [![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)]()
+  [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-purple?style=for-the-badge&logo=fastapi)]()
+  [![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-orange?style=for-the-badge&logo=pytorch)]()
+</div>
 
----
+<hr/>
 
-## 📋 Table of Contents
+## 🌟 Overview
 
-1. [Features](#features)
-2. [System Requirements](#system-requirements)
-3. [Quick Start](#quick-start)
-4. [Project Structure](#project-structure)
-5. [How It Works – Pipeline Overview](#how-it-works--pipeline-overview)
-6. [Configuration](#configuration)
-7. [Running the Platform](#running-the-platform)
-8. [API Reference](#api-reference)
-9. [Frontend (Gradio) Usage](#frontend-gradio-usage)
-10. [Voice-to-Voice Translation](#voice-to-voice-translation)
-11. [Troubleshooting](#troubleshooting)
-12. [Performance Tuning](#performance-tuning)
-13. [Extending the Platform](#extending-the-platform)
-14. [Credits & License](#credits--license)
+**Movie Voice Dubbing Studio** is an advanced, offline architecture designed to autonomously translate and dub video content while mathematically preserving the original acoustic environment. 
 
----
+By orchestrating **Whisper**, **Pyannote**, **Demucs**, and **OmniVoice-0.1.3**, this pipeline extracts a target video, maps the exact temporal boundaries of every specific character in the scene, synthesizes deep-layer multi-language translations, and clones 100% identical biometric voice acoustics. The generated vocal stems are seamlessly layered back onto the pristine, isolated background/music track, guaranteeing zero interference with the source movie's sound design.
 
-## ✨ Features
+<br>
 
-- **100% local** – no data leaves your server
-- **Voice-to-voice translation** – original speaker timbre preserved
-- **Multilingual** – 200+ languages (NLLB-200)
-- **Music & effects preservation** – Demucs source separation
-- **Emotion-aware synthesis** – adds `[laughter]`, `[sigh]`, etc.
-- **Frame-accurate sync** – uses original segment durations
-- **Web UI** (Gradio) + REST API (FastAPI)
-- **Asynchronous job queue** (Celery + Redis)
-- **Scalable** – multiple GPU workers
-- **Dockerized** – easy deployment
+<div align="center">
+  <!-- (Replace this with a screenshot of the beautiful Glassmorphism Gradio Dashboard) -->
+  <img src="https://via.placeholder.com/800x400.png?text=OmniVoice+Studio+Dashboard+Preview" alt="Dashboard Preview">
+</div>
 
----
+<br>
 
-## 🖥️ System Requirements
+## ⚙️ 12-Stage ML Pipeline Architecture
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| **GPU** | 16+ GB VRAM (e.g., RTX 4080) | 24+ GB (RTX 4090, A5000) |
-| **RAM** | 32+ GB | 64 GB |
-| **CPU** | 8 cores | 16+ cores |
-| **Storage** | 200 GB (models + temp files) | 1 TB SSD |
-| **OS** | Windows / Linux (Ubuntu 20.04+) | Linux (Ubuntu 22.04) |
+Our platform executes a strict algorithmic sequence orchestrated over Celery Task Queues:
 
-**Software prerequisites**:
-- Docker & Docker Compose
-- NVIDIA Container Toolkit (for GPU)
-- Python 3.10+ (for local development)
+| Stage | Subsystem | Action |
+| :--- | :--- | :--- |
+| **01** | `FFmpeg` | Forcefully extracts isolated audio bound to `24kHz` Mono constraints. |
+| **02** | `Denoise` | Scrubs digital hiss and static to prime stems for ML interpolation. |
+| **03** | `Demucs` | Deconstructs the acoustic layers, physically capturing exactly 100% unharmed Music/SFX background templates. |
+| **04** | `Pyannote` | Diarization array maps chronological IDs (`SPEAKER_00`, `SPEAKER_01`) dynamically separating different characters. |
+| **05** | `Whisper` | Scans text generating highly-precise millisecond word-level timestamps (`time stand`). |
+| **06** | `Alignment` | Mathematically cross-references Speaker IDs mapping precisely who spoke which words. |
+| **07** | `DistilRoBERTa`| Analyzes NLP acoustics, embedding biometric emotion tokens (e.g. `[laughter]`) to prevent robotic tones. |
+| **08** | `Deep Translator`| Parses the timeline JSON and translates the localized variables natively. |
+| **09** | `FFmpeg` | Dynamically slices clean 8-second 100% identical biometric vocal markers per unique character ID. |
+| **10** | `OmniVoice` | AI Model synthesizes the exact audio utilizing the biometric markers and mathematically forces boundaries adhering exactly to the original timeline durations. |
+| **11** | `Audio Muxing` | Layers the isolated translated AI stems perfectly back onto the untouched pure `Demucs` background music. |
+| **12** | `FFmpeg` | Non-destructive `copy` multiplexer binds the final English/French/Spanish audio matrix onto the MP4 timeline. |
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Deployment & Installation
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/Manoj-11-Dahal/Movie-Voice-Dubbing.git
-cd dubbing-platform
+### Option 1: Native Windows Executable (Recommended for Local GPU)
+This project features a fully automated deployment loop specifically engineered for local desktop usage, bypassing Docker-induced GPU driver conflicts.
 
-# 2. Copy environment file
-cp .env.example .env
-# Edit .env if needed (GPU, etc.)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Manoj-11-Dahal/Movie-Voice-Dubbing.git
+   cd Movie-Voice-Dubbing
+   ```
+2. Start your local **Redis** instance (Required on Port `6379`).
+3. Run the Auto-Orchestrator:
+   ```bash
+   python start.py
+   ```
+   > 🚀 **How it works:** `start.py` will automatically build a secure Virtual Environment, download and map over 60 Pip dependencies targeting your specific Python binaries, download Gigabytes of huggingface Machine Learning models proactively, and finally spawn the `FastAPI`, `Celery Worker`, and `Gradio UI` background threads.
 
-# 3. Start all services
-docker-compose up --build
-
-# 4. Open browser → http://localhost:7860
-```
-
-First startup downloads ~15 GB of models (once). Subsequent starts are instant.
-
----
-
-## 📁 Project Structure
-
-```
-dubbing_platform/
-│
-├── .env.example
-├── .gitignore
-├── README.md
-├── docker-compose.yml
-├── requirements.txt
-├── setup.py
-│
-├── backend/                     # FastAPI backend
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── app/
-│       ├── main.py
-│       ├── api/
-│       ├── tasks/               # Celery tasks
-│       ├── models/              # Model loaders
-│       └── utils/
-│
-├── worker/                      # Celery worker configuration
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── start_worker.sh
-│
-├── frontend/                    # Gradio Web UI
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── gradio_app.py
-│
-├── OmniVoice-0.1.3/             # Local OmniVoice installation
-│   └── ...                      # Model inference library
-│
-├── scripts/                     # 12-Stage Pipeline scripts
-│   ├── stage_01_extract_audio.py
-│   ├── stage_02_denoise.py
-│   ├── stage_03_separate_sources.py
-│   ├── stage_04_diarization.py
-│   ├── stage_05_transcribe_wordlevel.py
-│   ├── stage_06_align_speakers.py
-│   ├── stage_07_emotion_detection.py
-│   ├── stage_08_translate_nllb.py
-│   ├── stage_09_extract_references.py
-│   ├── stage_10_generate_omnivoice.py
-│   ├── stage_11_reassemble_audio.py
-│   ├── stage_12_mux_video.py
-│   └── utils/
-│
-├── config/                      # Configuration files
-│   ├── pipeline_config.yaml
-│   └── emotion_tag_map.yaml
-│
-└── storage/                     # Runtime data (created at runtime)
-    ├── uploads/
-    ├── jobs/
-    └── output/
-```
-
----
-
-## ⚙️ How It Works – Pipeline Overview
-
-| Stage | Script | Description |
-|-------|--------|-------------|
-| 1 | `extract_audio` | Extract 24 kHz mono WAV from video |
-| 2 | `denoise` | Remove background noise (Sidon) |
-| 3 | `separate_sources` | Demucs → dialogue, music+effects (M&E) |
-| 4 | `diarization` | pyannote → speaker segments |
-| 5 | `transcribe_wordlevel` | Whisper large-v3 with word timestamps |
-| 6 | `align_speakers` | Assign speaker labels to each word |
-| 7 | `emotion_detection` | Wav2Vec2-emotion per word |
-| 8 | `translate_nllb` | Translate text to target language (NLLB-200) |
-| 9 | `extract_references` | Build clean reference clips per speaker |
-| 10 | `generate_omnivoice` | Synthesise translated speech (original timbre) |
-| 11 | `reassemble_audio` | Mix new dialogue with original M&E (crossfade) |
-| 12 | `mux_video` | Replace audio track in video (FFmpeg) |
-
-All stages are orchestrated by Celery and can be re-run independently.
-
----
-
-## 🛠️ Configuration
-
-Main configuration file: `config/pipeline_config.yaml`
-
-```yaml
-models:
-  omnivoice: "./OmniVoice-0.1.3"  # Local model
-  whisper: "large-v3"
-  pyannote: "pyannote/speaker-diarization-3.1"
-  emotion: "facebook/wav2vec2-base-ravens"
-  nllb: "facebook/nllb-200-distilled-1.3B"
-  demucs: "demucs"
-
-generation:
-  num_step: 16               # diffusion steps (16 fast, 32 quality)
-  guidance_scale: 2.0
-  preprocess_prompt: true
-  postprocess_output: true
-  crossfade_duration: 0.01   # seconds
-
-voice_to_voice:
-  enabled: true
-  fallback_to_design: true
-  similarity_threshold: 0.75
-
-audio:
-  sample_rate: 24000
-  channels: 1
-```
-
-Emotion mapping: `config/emotion_tag_map.yaml`
-
-```yaml
-happy: "[laughter]"
-sad: "[sigh]"
-angry: "[dissatisfaction-hnn]"
-surprised: "[surprise-ah]"
-neutral: ""
-```
-
----
-
-## 🏃 Running the Platform
-
-### Start all services
-
+### Option 2: Docker Containerization
+For native Linux environments scaling to AWS/GCP pipelines.
 ```bash
 docker-compose up --build
 ```
 
-### Stop
+---
 
-```bash
-docker-compose down
+## 🎨 Frontend Architecture
+
+The interface natively runs on `http://127.0.0.1:7860`. Built around a custom HTML/CSS Glassmorphism injection over Gradio, the UI seamlessly polls the backend Celery tasks parsing live UI status pills reporting the exact fractional state of the 12-stage pipeline globally. 
+
+## 🔧 Environment Variables
+
+On initial launch, a `.env` file is generated. Ensure that if you plan to fully utilize Pyannote's gated diarization protocols, you provide a valid Huggingface Authorize Token.
+
+```env
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/1
+OUTPUT_DIR=./storage/output
+UPLOAD_DIR=./storage/uploads
+BACKEND_URL=http://localhost:8000
+HF_AUTH_TOKEN=your_huggingface_access_token_here
 ```
 
-### Scale workers (more GPUs)
-
-```bash
-docker-compose up --scale worker=4
-```
-
-### View logs
-
-```bash
-docker-compose logs -f backend
-docker-compose logs -f worker
-```
-
-### Reset all data
-
-```bash
-docker-compose down -v
-rm -rf storage/*
-```
-
----
-
-## 📡 API Reference
-
-The backend exposes a REST API on port `8000`.
-
-### `POST /upload`
-Upload a video and start dubbing.
-**Request** (multipart/form-data):
-- `file`: video file (MP4, MOV)
-- `target_lang`: NLLB language code (default `fra_Latn`)
-- `voice_to_voice`: boolean (default `true`)
-
-**Response**:
-```json
-{
-  "job_id": "uuid",
-  "task_id": "celery-task-id"
-}
-```
-
-### `GET /status/{job_id}`
-Get job progress.
-
-**Response**:
-```json
-{
-  "state": "GENERATING",
-  "progress": 0.75
-}
-```
-
-### `GET /download/{job_id}`
-Download the final dubbed video.
-**Response**: MP4 file.
-
-### `GET /health`
-Health check.
-
----
-
-## 🖥️ Frontend (Gradio) Usage
-
-Open `http://localhost:7860`.
-
-1. **Upload** a video file.
-2. **Select target language** (e.g., `fra_Latn` for French).
-3. **Check** "Preserve original speaker's voice" (voice-to-voice).
-4. Click **Start Dubbing**.
-5. Watch progress bar.
-6. **Download** the dubbed video when ready.
-
-The UI automatically refreshes progress every 2 seconds.
-
----
-
-## 🎤 Voice-to-Voice Translation
-
-**What it does**: The final dubbed speaker sounds like the original actor, even though they are now speaking a different language.
-
-**How it works**:
-- Stage 9 extracts a **clean 3-10 second clip** of each speaker from the original dialogue.
-- Stage 10 uses that clip as `ref_audio` in OmniVoice.
-- The translated text is generated with the original timbre.
-
-**Configuration**:
-- `voice_to_voice.enabled`: set to `true` (default).
-- If a speaker has no reference clip (e.g., too short), the system falls back to **voice design** using language-appropriate attributes.
-
----
-
-## 🔧 Troubleshooting
-
-### Out of memory (CUDA OOM)
-- Reduce `generation.num_step` to 16.
-- Set `CUDA_VISIBLE_DEVICES` to a single GPU.
-- Reduce worker concurrency to 1.
-
-### Whisper word timestamps are misaligned
-- The audio must be 24 kHz mono. Stage 1 already ensures that.
-- If still bad, use `stage_05_transcribe_wordlevel.py` with `--language` forced.
-
-### NLLB translation quality is low
-- Use the larger `nllb-200-distilled-1.3B` (already default).
-
-### Gradio UI shows "Connection error"
-- Ensure backend container is running: `docker-compose ps`.
-- Check `BACKEND_URL` in frontend environment.
-
----
-
-## ⚡ Performance Tuning
-
-| Parameter | Effect | Recommendation |
-|-----------|--------|----------------|
-| `num_step: 16` vs `32` | 2x faster, slight quality drop | Use 16 for preview, 32 for final |
-| `worker concurrency` | Number of parallel jobs per GPU | Keep at 1 (OmniVoice uses ~8-12 GB VRAM) |
-| `crossfade_duration: 0.01` | Smooth joins | 0.005-0.02 is safe |
-
----
-
-## 📄 Credits & License
-
-**Models**:
-- [OmniVoice](https://github.com/k2-fsa/OmniVoice) – Apache 2.0
-- [Whisper](https://github.com/openai/whisper) – MIT
-- [NLLB-200](https://github.com/facebookresearch/fairseq/tree/nllb) – CC BY-NC 4.0
-- [Demucs](https://github.com/facebookresearch/demucs) – MIT
-- [pyannote.audio](https://github.com/pyannote/pyannote-audio) – MIT
-
-**Platform code**: MIT (see LICENSE file).
-
----
-
-**Enjoy dubbing with full control – no cloud, no compromises.**
+## 📜 License
+This project operates under the **MIT License**. Deep Translation arrays and OmniVoice libraries possess independent usage metrics dynamically located via `./LICENSE`.
