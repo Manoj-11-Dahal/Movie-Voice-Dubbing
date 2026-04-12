@@ -60,8 +60,7 @@ This project features a fully automated deployment loop specifically engineered 
    cd Movie-Voice-Dubbing
    ```
 2. Start your local **Redis** instance (Required on Port `6379`).
-
-   ```bash
+  ```bash
   python -m pip install --upgrade pip
    ```
 
