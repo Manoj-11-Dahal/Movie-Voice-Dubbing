@@ -42,8 +42,8 @@ A **fully offline, production-ready** dubbing platform that preserves original s
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| **GPU** | 16 GB VRAM (e.g., RTX 4080) | 24+ GB (RTX 4090, A5000) |
-| **RAM** | 16 GB | 64 GB |
+| **GPU** | 16+ GB VRAM (e.g., RTX 4080) | 24+ GB (RTX 4090, A5000) |
+| **RAM** | 32+ GB | 64 GB |
 | **CPU** | 8 cores | 16+ cores |
 | **Storage** | 200 GB (models + temp files) | 1 TB SSD |
 | **OS** | Windows / Linux (Ubuntu 20.04+) | Linux (Ubuntu 22.04) |
@@ -59,7 +59,7 @@ A **fully offline, production-ready** dubbing platform that preserves original s
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/dubbing-platform.git
+git clone https://github.com/Manoj-11-Dahal/Movie-Voice-Dubbing.git
 cd dubbing-platform
 
 # 2. Copy environment file
